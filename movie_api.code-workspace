@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Code/simple-js-app/.git"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "movie_api"
+	}
+}

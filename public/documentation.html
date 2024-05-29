@@ -8,5 +8,62 @@
 <body>
   <h1>Movie API Documentation</h1>
   <p>Welcome to the Movie API! This API allows you to retrieve information about various movies. You can search for movies by title, get details about specific movies, and more.</p>
+  
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Request</th>
+        <th>URL</th>
+        <th>Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GET</td>
+        <td>/movies</td>
+        <td>JSON array of all movies</td>
+      </tr>
+      <tr>
+        <td>GET</td>
+        <td>/movies/:title</td>
+        <td>JSON object with movie details (description, genre, director, image URL, featured)</td>
+      </tr>
+      <tr>
+        <td>GET</td>
+        <td>/genres/:name</td>
+        <td>JSON object with genre description</td>
+      </tr>
+      <tr>
+        <td>GET</td>
+        <td>/directors/:name</td>
+        <td>JSON object with director's bio, birth year, death year</td>
+      </tr>
+      <tr>
+        <td>POST</td>
+        <td>/users</td>
+        <td>JSON object with new user details</td>
+      </tr>
+      <tr>
+        <td>PUT</td>
+        <td>/users/:userId</td>
+        <td>JSON object with updated user details</td>
+      </tr>
+      <tr>
+        <td>POST</td>
+        <td>/users/:userId/favorites</td>
+        <td>Text indicating the movie has been added to favorites</td>
+      </tr>
+      <tr>
+        <td>DELETE</td>
+        <td>/users/:userId/favorites/:movieId</td>
+        <td>Text indicating the movie has been removed from favorites</td>
+      </tr>
+      <tr>
+        <td>DELETE</td>
+        <td>/users/:userId</td>
+        <td>Text indicating the user's email has been removed</td>
+      </tr>
+    </tbody>
+  </table>
 </body>
-</html> 
+</html>
