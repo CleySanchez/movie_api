@@ -1,3 +1,11 @@
+const mongoose = require('mongoose');
+const Models = require('./models.js');
+
+const Movies = Models.Movie;
+const Users = Models.User;
+
+mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true });
+
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
@@ -16,24 +24,44 @@ app.use(express.static('public'));
 
 // Routes
 // Create a GET route for /movies that returns a JSON object containing data about your top 10 movies
-app.get('/movies', (req, res) => {
-  res.json([
-    { title: "A Clockwork Orange", year: 1971 },
-    { title: "Old Boy", year: 2003 },
-    { title: "Castaway on the Moon", year: 2009 },
-    { title: "Star Wars - A New Hope", year: 1977 },
-    { title: "Schindler's List", year: 1993 },
-    { title: "The Lord of the Rings: The Return of the King", year: 2003 },
-    { title: "Pulp Fiction", year: 1994 },
-    { title: "The Good, the Bad and the Ugly", year: 1966 },
-    { title: "Fight Club", year: 1999 },
-    { title: "Forrest Gump", year: 1994 }
-  ]);
+app.get('/movies', async (req, res) => {
+  try {
+    const movies = await Movies.find({});
+    res.json(movies);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching movies' });
+  }
+});
+
+// Add a user
+app.post('/users', async (req, res) => {
+  await Users.findOne({ Username: req.body.Username })
+    .then((user) => {
+      if (user) {
+        return res.status(400).send(req.body.Username + ' already exists');
+      } else {
+        Users.create({
+          Username: req.body.Username,
+          Password: req.body.Password,
+          Email: req.body.Email,
+          Birthday: new Date(req.body.Birthday)
+        })
+        .then((user) => res.status(201).json(user))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).send('Error: ' + error);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error: ' + error);
+    });
 });
 
 // GET route for the home page
 app.get('/', (req, res) => {
-  res.send('Welcome to My Movie App!');
+  res.send('Welcome to My Movie App!!!');
 });
 
 // Get a single movie by title
@@ -51,11 +79,6 @@ app.get('/directors/:name', (req, res) => {
   res.send(`GET request returning data for director: ${req.params.name}`);
 });
 
-// Register a new user
-app.post('/users', (req, res) => {
-  res.send('POST request to register a new user');
-});
-
 // Update user info
 app.put('/users/:userId', (req, res) => {
   res.send(`PUT request to update user: ${req.params.userId}`);
@@ -64,6 +87,22 @@ app.put('/users/:userId', (req, res) => {
 // Add a movie to user's favorites
 app.post('/users/:userId/favorites', (req, res) => {
   res.send('POST request to add a movie to user\'s favorites');
+});
+
+// Update a user's favorites
+app.put('/users/:userId/favorites/:movieId', (req, res) => {
+  Users.findByIdAndUpdate(
+    req.params.userId, 
+    { $addToSet: { Favorites: req.params.movieId } }, 
+    { new: true }, 
+    (err, updatedUser) => {
+      if (err) {
+        res.status(500).send('Error: ' + err);
+      } else {
+        res.json(updatedUser);
+      }
+    }
+  );
 });
 
 // Remove a movie from user's favorites
