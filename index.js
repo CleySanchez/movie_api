@@ -28,6 +28,8 @@ let auth = require('./auth')(app);
 const passport = require('passport');
 require('./passport');
 
+
+
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
 
@@ -43,8 +45,8 @@ app.get('/movies', passport.authenticate('jwt', { session: false }), async (req,
   }
 });
 
-// Add a user
-app.post('/users', async (req, res) => {
+// Add a user with JWT authentication
+app.post('/users', passport.authenticate('jwt', { session: false }), async (req, res) => {
   await Users.findOne({ Username: req.body.Username })
     .then((user) => {
       if (user) {
@@ -68,6 +70,9 @@ app.post('/users', async (req, res) => {
       res.status(500).send('Error: ' + error);
     });
 });
+
+
+
 
 // GET route for the home page
 app.get('/', (req, res) => {
