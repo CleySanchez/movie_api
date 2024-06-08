@@ -8,7 +8,8 @@ mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useU
 
 const express = require('express');
 const morgan = require('morgan');
-const path = require('path');
+const bodyParser = require('body-parser');
+ 
 
 const app = express();
 const port = 8080; // Use a single port for the server
@@ -18,13 +19,22 @@ app.use(morgan('common'));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Authentication setup
+let auth = require('./auth')(app);
+
+// Assuming you have a passport.js file for JWT strategy
+const passport = require('passport');
+require('./passport');
 
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
 
 // Routes
-// Create a GET route for /movies that returns a JSON object containing data about your top 10 movies
-app.get('/movies', async (req, res) => {
+
+// Get all movies with JWT authentication
+app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const movies = await Movies.find({});
     res.json(movies);
@@ -64,55 +74,110 @@ app.get('/', (req, res) => {
   res.send('Welcome to My Movie App!!!');
 });
 
-// Get a single movie by title
-app.get('/movies/:title', (req, res) => {
-  res.send(`GET request returning data for movie: ${req.params.title}`);
-});
-
-// Get a genre by name
-app.get('/genres/:name', (req, res) => {
-  res.send(`GET request returning data for genre: ${req.params.name}`);
-});
-
-// Get a director by name
-app.get('/directors/:name', (req, res) => {
-  res.send(`GET request returning data for director: ${req.params.name}`);
-});
-
-// Update user info
-app.put('/users/:userId', (req, res) => {
-  res.send(`PUT request to update user: ${req.params.userId}`);
-});
-
-// Add a movie to user's favorites
-app.post('/users/:userId/favorites', (req, res) => {
-  res.send('POST request to add a movie to user\'s favorites');
-});
-
-// Update a user's favorites
-app.put('/users/:userId/favorites/:movieId', (req, res) => {
-  Users.findByIdAndUpdate(
-    req.params.userId, 
-    { $addToSet: { Favorites: req.params.movieId } }, 
-    { new: true }, 
-    (err, updatedUser) => {
-      if (err) {
-        res.status(500).send('Error: ' + err);
-      } else {
-        res.json(updatedUser);
-      }
+// Get a single movie by title with JWT authentication
+app.get('/movies/:title', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const movie = await Movies.findOne({ Title: req.params.title });
+    if (movie) {
+      res.json(movie);
+    } else {
+      res.status(404).send('Movie not found');
     }
-  );
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching the movie' });
+  }
 });
 
-// Remove a movie from user's favorites
-app.delete('/users/:userId/favorites/:movieId', (req, res) => {
-  res.send(`DELETE request to remove movie: ${req.params.movieId} from user: ${req.params.userId}'s favorites`);
+// Get a genre by name with JWT authentication
+app.get('/genres/:name', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const movies = await Movies.find({ 'Genre.Name': req.params.name });
+    if (movies.length > 0) {
+      res.json(movies);
+    } else {
+      res.status(404).send('Genre not found');
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching the genre' });
+  }
 });
 
-// Deregister a user
-app.delete('/users/:userId', (req, res) => {
-  res.send(`DELETE request to remove user: ${req.params.userId}`);
+// Get a director by name with JWT authentication
+app.get('/directors/:name', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const movies = await Movies.find({ 'Director.Name': req.params.name });
+    if (movies.length > 0) {
+      res.json(movies);
+    } else {
+      res.status(404).send('Director not found');
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching the director' });
+  }
+});
+
+// Update user info with JWT authentication
+app.put('/users/:Username', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  // CONDITION TO CHECK ADDED HERE
+  if(req.user.Username !== req.params.Username){
+      return res.status(400).send('Permission denied');
+  }
+  // CONDITION ENDS
+  await Users.findOneAndUpdate({ Username: req.params.Username }, {
+      $set:
+      {
+          Username: req.body.Username,
+          Password: req.body.Password,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday
+      }
+  },
+      { new: true }) // This line makes sure that the updated document is returned
+      .then((updatedUser) => {
+          res.json(updatedUser);
+      })
+      .catch((err) => {
+          console.log(err);
+          res.status(500).send('Error: ' + err);
+      })
+});
+
+// Add a movie to user's favorites with JWT authentication
+app.post('/users/:userId/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const updatedUser = await Users.findByIdAndUpdate(
+      req.params.userId,
+      { $addToSet: { Favorites: req.params.movieId } },
+      { new: true }
+    );
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while adding the movie to favorites' });
+  }
+});
+
+// Remove a movie from user's favorites with JWT authentication
+app.delete('/users/:userId/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const updatedUser = await Users.findByIdAndUpdate(
+      req.params.userId,
+      { $pull: { Favorites: req.params.movieId } },
+      { new: true }
+    );
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while removing the movie from favorites' });
+  }
+});
+
+// Deregister a user with JWT authentication
+app.delete('/users/:userId', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    await Users.findByIdAndRemove(req.params.userId);
+    res.status(200).send('User was deleted.');
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while deleting the user' });
+  }
 });
 
 // Error-handling middleware function to log all application-level errors
