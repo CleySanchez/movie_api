@@ -14,6 +14,9 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = 8080; // Use a single port for the server
 
+// Serve static files from the 'public' folder
+app.use(express.static('public'));
+
 // Middleware to log all requests
 app.use(morgan('common'));
 
@@ -30,40 +33,15 @@ require('./passport');
 
 
 
-// Serve static files from the 'public' folder
-app.use(express.static('public'));
+
 
 // Routes
 
 // Get all movies with JWT authentication
 app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  try {
-    const movies = await Movies.find({});
-    res.json(movies);
-  } catch (error) {
-    res.status(500).json({ error: 'An error occurred while fetching movies' });
-  }
-});
-
-// Add a user with JWT authentication
-app.post('/users', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  await Users.findOne({ Username: req.body.Username })
-    .then((user) => {
-      if (user) {
-        return res.status(400).send(req.body.Username + ' already exists');
-      } else {
-        Users.create({
-          Username: req.body.Username,
-          Password: req.body.Password,
-          Email: req.body.Email,
-          Birthday: new Date(req.body.Birthday)
-        })
-        .then((user) => res.status(201).json(user))
-        .catch((error) => {
-          console.error(error);
-          res.status(500).send('Error: ' + error);
-        });
-      }
+  await Movies.find()
+    .then((movies) => {
+      res.status(201).json(movies);
     })
     .catch((error) => {
       console.error(error);
@@ -71,6 +49,30 @@ app.post('/users', passport.authenticate('jwt', { session: false }), async (req,
     });
 });
 
+app.post('/users', async (req, res) => {
+  await Users.findOne({ Username: req.body.Username })
+      .then((user) => {
+          if (user) {
+               res.status(400).send(req.body.Username + ' already exists');
+          } else {
+              Users.create({
+                  Username: req.body.Username,
+                  Password: req.body.Password,
+                  Email: req.body.Email,
+                  Birthday: new Date(req.body.Birthday)
+              })
+              .then((user) => res.status(201).json(user))
+              .catch((error) => {
+                  console.error(error);
+                  res.status(500).send('Error: ' + error);
+              });
+          }
+      })
+      .catch((error) => {
+          console.error(error);
+          res.status(500).send('Error: ' + error);
+      });
+});
 
 
 
