@@ -1,17 +1,17 @@
 {
   "name": "movie_api",
   "version": "1.0.0",
-  "description": "Flix app to reference movies",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
-  "dependencies": {
-    "express": "^4.17.1"
-  }
-}
-
-{
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  },
   "devDependencies": {
     "@eslint/js": "^9.3.0",
     "eslint": "^9.3.0"
