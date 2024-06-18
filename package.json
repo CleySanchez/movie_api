@@ -1,12 +1,27 @@
 {
+  "name": "movie_api",
+  "version": "1.0.0",
+  "description": "Flix app to reference movies",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
+
+{
   "devDependencies": {
     "@eslint/js": "^9.3.0",
     "eslint": "^9.3.0"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "express-validator": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongoose": "^8.4.1",
