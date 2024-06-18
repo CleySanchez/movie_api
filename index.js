@@ -6,14 +6,21 @@ const Models = require('./models.js');
 const Movies = Models.Movie;
 const Users = Models.User;
 
-mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true });
+//mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true });//
+
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/test', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+
 
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const { check, validationResult } = require('express-validator');
 
 const app = express();
-const port = 8080; // Use a single port for the server
+//const port = 8080; // Use a single port for the server
 
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
@@ -26,7 +33,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const cors = require('cors');
-////app.use(cors());//*
+//app.use(cors());
 
 let allowedOrigins = ['http://localhost:8080', 'http://testsite.com'];
 
@@ -251,7 +258,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-const port = process.env.PORT || 8080;
 app.listen(port, '0.0.0.0',() => {
  console.log('Listening on Port ' + port);
 });
