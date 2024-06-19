@@ -20,7 +20,7 @@ const bodyParser = require('body-parser');
 const { check, validationResult } = require('express-validator');
 
 const app = express();
-const port = 8080; // Use a single port for the server//
+const port = process.env.PORT|| 8080;
 
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
