@@ -1,0 +1,1 @@
+{"_id":{"$oid":"632dc69a28593670e4ee9231"},"Username":"John doe","password":"pw12345","email":"john.doe@gmail.com","Birthday":{"$date":"1981-02-13T00:00:00Z"},"FavoriteMovies":[{"$oid":"632d795de53641d825b56bfd"},{"$oid":"632d888de53641d825b56bfe"},{"$oid":"632d8893e53641d825b56bff"}]}
