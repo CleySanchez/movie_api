@@ -16,15 +16,7 @@ const Users = Models.User;
 }); */
 
 // MongoDB connection
-const uri = process.env.MONGODB_URI || 'mongodb+srv://clementsanchez31:clementsanchez31@myflixdb.imdmhry.mongodb.net/mydatabase?retryWrites=true&w=majority';
-mongoose.connect(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('Connected to MongoDB');
-}).catch((err) => {
-  console.error('Error connecting to MongoDB:', err.message);
-});
+mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const morgan = require('morgan');
@@ -45,20 +37,10 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const cors = require('cors');
-//app.use(cors());
+app.use(cors());
 
-let allowedOrigins = ['http://localhost:8080', 'http://testsite.com'];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){ // If a specific origin isn’t found on the list of allowed origins
-      let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
-      return callback(new Error(message ), false);
-    }
-    return callback(null, true);
-  }
-}));
+
 
 /* rest of code goes here*/
 
