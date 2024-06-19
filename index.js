@@ -10,11 +10,21 @@ const Users = Models.User;
 
 //mongoose.connect('mongodb+srv://clementsanchez31:clementsanchez31@myflixdb.imdmhry.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });//
 
-mongoose.connect(process.env.MONGODB_URI, {
+/* mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-});
+}); */
 
+// MongoDB connection
+const uri = process.env.MONGODB_URI || 'mongodb+srv://clementsanchez31:clementsanchez31@myflixdb.imdmhry.mongodb.net/mydatabase?retryWrites=true&w=majority';
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Error connecting to MongoDB:', err.message);
+});
 
 
 const morgan = require('morgan');
