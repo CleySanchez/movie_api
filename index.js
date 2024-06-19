@@ -8,7 +8,9 @@ const Users = Models.User;
 
 //mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true });//
 
-mongoose.connect(process.env.MONGODB_URI {
+mongoose.connect('mongodb+srv://clementsanchez31:clementsanchez31@myflixdb.imdmhry.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
+
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
