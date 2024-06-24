@@ -1,41 +1,19 @@
 const express = require('express');
-
 const mongoose = require('mongoose');
 const Models = require('./models.js');
-
 const Movies = Models.Movie;
 const Users = Models.User;
 
-//mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true });//
-
-//mongoose.connect('mongodb+srv://clementsanchez31:clementsanchez31@myflixdb.imdmhry.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });//
-
-/* mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}); */
-
 // MongoDB connection
 mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
- 
-//const connectionUri = process.env.CONNECTION_URI;//
-
-/* mongoose.connect(connectionUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-  }); 
- */
- 
 
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const { check, validationResult } = require('express-validator');
+const cors = require('cors');
 
 const app = express();
-const port = process.env.PORT|| 8080;
+const port = process.env.PORT || 8080;
 
 // Serve static files from the 'public' folder
 app.use(express.static('public'));
@@ -47,13 +25,8 @@ app.use(morgan('common'));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const cors = require('cors');
+// Enable CORS for all requests
 app.use(cors());
-
-
-
-
-/* rest of code goes here*/
 
 // Authentication setup
 let auth = require('./auth')(app);
@@ -62,11 +35,14 @@ let auth = require('./auth')(app);
 const passport = require('passport');
 require('./passport');
 
-
-
 // Routes
 
-// Endpoint to get all genres
+// GET route for the home page
+app.get('/', (req, res) => {
+  res.send('Welcome to My Movie App!!!');
+});
+
+// Endpoint to get all genres with JWT authentication
 app.get('/genre', passport.authenticate('jwt', { session: false }), async (req, res) => {
   await Movies.distinct('genre.name')
     .then((genre) => {
@@ -77,7 +53,6 @@ app.get('/genre', passport.authenticate('jwt', { session: false }), async (req, 
       res.status(500).send('Error: ' + error);
     });
 });
-
 
 // Get all movies with JWT authentication
 app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -91,58 +66,41 @@ app.get('/movies', passport.authenticate('jwt', { session: false }), async (req,
     });
 });
 
-app.post('/users',
-  // Validation logic here for request
-  //you can either use a chain of methods like .not().isEmpty()
-  //which means "opposite of isEmpty" in plain english "is not empty"
-  //or use .isLength({min: 5}) which means
-  //minimum value of 5 characters are only allowed
-  [
-    check('Username', 'Username is required').isLength({min: 5}),
-    check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('Password', 'Password is required').not().isEmpty(),
-    check('Email', 'Email does not appear to be valid').isEmail()
-  ], async (req, res) => {
+// Register a new user with validation
+app.post('/users', [
+  check('Username', 'Username is required').isLength({ min: 5 }),
+  check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+  check('Password', 'Password is required').not().isEmpty(),
+  check('Email', 'Email does not appear to be valid').isEmail()
+], async (req, res) => {
+  let errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
 
-  // check the validation object for errors
-    let errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
-
-    let hashedPassword = Users.hashPassword(req.body.Password);
-    await Users.findOne({ Username: req.body.Username }) // Search to see if a user with the requested username already exists
-      .then((user) => {
-        if (user) {
-          //If the user is found, send a response that it already exists
-          return res.status(400).send(req.body.Username + ' already exists');
-        } else {
-          Users
-            .create({
-              Username: req.body.Username,
-              Password: hashedPassword,
-              Email: req.body.Email,
-              Birthday: req.body.Birthday
-            })
-            .then((user) => { res.status(201).json(user) })
-            .catch((error) => {
-              console.error(error);
-              res.status(500).send('Error: ' + error);
-            });
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error: ' + error);
-      });
-  });
-
-
-
-// GET route for the home page
-app.get('/', (req, res) => {
-  res.send('Welcome to My Movie App!!!');
+  let hashedPassword = Users.hashPassword(req.body.Password);
+  await Users.findOne({ Username: req.body.Username })
+    .then((user) => {
+      if (user) {
+        return res.status(400).send(req.body.Username + ' already exists');
+      } else {
+        Users.create({
+          Username: req.body.Username,
+          Password: hashedPassword,
+          Email: req.body.Email,
+          Birthday: req.body.Birthday
+        })
+        .then((user) => { res.status(201).json(user) })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).send('Error: ' + error);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).send('Error: ' + error);
+    });
 });
 
 // Get a single movie by title with JWT authentication
@@ -160,7 +118,6 @@ app.get('/movies/:title', passport.authenticate('jwt', { session: false }), asyn
       res.status(500).send('Error: ' + error);
     });
 });
-
 
 // Get a genre by name with JWT authentication
 app.get('/genre/:name', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -192,43 +149,41 @@ app.get('/director/:name', passport.authenticate('jwt', { session: false }), asy
   }
 });
 
+// Update user info with JWT authentication and validation
 app.put('/users/:username', passport.authenticate('jwt', { session: false }), [
-  // Validation logic for request
   check('Username', 'Username is required').isLength({ min: 5 }),
   check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
   check('Password', 'Password is required').not().isEmpty(),
   check('Email', 'Email does not appear to be valid').isEmail()
 ], async (req, res) => {
-  // Check the validation object for errors
   let errors = validationResult(req);
   if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
+    return res.status(422).json({ errors: errors.array() });
   }
 
-  // Check if the logged-in user matches the username in the request
   if (req.user.Username !== req.params.username) {
-      return res.status(400).send('Permission denied');
+    return res.status(400).send('Permission denied');
   }
 
-  // Hash the new password if provided
   let hashedPassword = Users.hashPassword(req.body.Password);
 
   await Users.findOneAndUpdate({ Username: req.params.username }, {
-      $set: {
-          Username: req.body.Username,
-          Password: hashedPassword,
-          Email: req.body.Email,
-          Birthday: req.body.Birthday
-      }
-  }, { new: true }) // This line makes sure that the updated document is returned
-      .then((updatedUser) => {
-          res.json(updatedUser);
-      })
-      .catch((err) => {
-          console.log(err);
-          res.status(500).send('Error: ' + err);
-      });
+    $set: {
+      Username: req.body.Username,
+      Password: hashedPassword,
+      Email: req.body.Email,
+      Birthday: req.body.Birthday
+    }
+  }, { new: true })
+  .then((updatedUser) => {
+    res.json(updatedUser);
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500).send('Error: ' + err);
+  });
 });
+
 // Add a movie to user's favorites with JWT authentication
 app.post('/users/:userId/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
@@ -274,6 +229,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(port, '0.0.0.0',() => {
- console.log('Listening on Port ' + port);
+app.listen(port, '0.0.0.0', () => {
+  console.log('Listening on Port ' + port);
 });
