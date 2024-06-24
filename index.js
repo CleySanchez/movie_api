@@ -192,32 +192,43 @@ app.get('/director/:name', passport.authenticate('jwt', { session: false }), asy
   }
 });
 
-// Update user info with JWT authentication
-app.put('/users/:username', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  // CONDITION TO CHECK ADDED HERE
-  if(req.user.Username !== req.params.username){
+app.put('/users/:username', passport.authenticate('jwt', { session: false }), [
+  // Validation logic for request
+  check('Username', 'Username is required').isLength({ min: 5 }),
+  check('Username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+  check('Password', 'Password is required').not().isEmpty(),
+  check('Email', 'Email does not appear to be valid').isEmail()
+], async (req, res) => {
+  // Check the validation object for errors
+  let errors = validationResult(req);
+  if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+  }
+
+  // Check if the logged-in user matches the username in the request
+  if (req.user.Username !== req.params.username) {
       return res.status(400).send('Permission denied');
   }
-  // CONDITION ENDS
-  await Users.findOneAndUpdate({ username: req.params.username }, {
-      $set:
-      {
+
+  // Hash the new password if provided
+  let hashedPassword = Users.hashPassword(req.body.Password);
+
+  await Users.findOneAndUpdate({ Username: req.params.username }, {
+      $set: {
           Username: req.body.Username,
-          Password: req.body.Password,
+          Password: hashedPassword,
           Email: req.body.Email,
           Birthday: req.body.Birthday
       }
-  },
-      { new: true }) // This line makes sure that the updated document is returned
+  }, { new: true }) // This line makes sure that the updated document is returned
       .then((updatedUser) => {
           res.json(updatedUser);
       })
       .catch((err) => {
           console.log(err);
           res.status(500).send('Error: ' + err);
-      })
+      });
 });
-
 // Add a movie to user's favorites with JWT authentication
 app.post('/users/:userId/favorites/:movieId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
