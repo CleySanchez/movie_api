@@ -8,6 +8,7 @@
 		}
 	],
 	"settings": {
-		"liveServer.settings.multiRootWorkspaceName": "movie_api"
+		"liveServer.settings.multiRootWorkspaceName": "movie_api",
+		"eslint.useFlatConfig": false
 	}
 }
