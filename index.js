@@ -62,7 +62,7 @@ app.get('/genre', passport.authenticate('jwt', { session: false }), async (req, 
 
 
 // Get all movies with JWT authentication
-app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.get('/movies' { session: false }), async (req, res) => {
   await Movies.find()
     .then((movies) => {
       res.status(201).json(movies);
@@ -71,7 +71,7 @@ app.get('/movies', passport.authenticate('jwt', { session: false }), async (req,
       console.error(error);
       res.status(500).send('Error: ' + error);
     });
-});
+};
 
 app.post('/users', async (req, res) => {
   await Users.findOne({ Username: req.body.Username })
