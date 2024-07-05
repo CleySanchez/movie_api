@@ -38,6 +38,8 @@ let auth = require("./auth")(app);
 const passport = require("passport");
 require("./passport");
 
+
+
 // Routes
 
 // GET route for the home page
@@ -61,7 +63,7 @@ app.get(
   }
 );
 
-/* // Get al movies with JWT authentication
+ // Get al movies with JWT authentication
 app.get(
   "/movies",
   passport.authenticate("jwt", { session: false }),
@@ -75,18 +77,8 @@ app.get(
         res.status(500).send("Error: " + error);
       });
   }
-); */
+); 
 
-app.get("/movies", async (req, res) => {
-  await Movies.find()
-    .then((movies) => {
-      res.status(201).json(movies);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).send("Error: " + error);
-    });
-});
 
 // Register a new user with validation
 app.post(
