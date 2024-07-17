@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
 const Models = require("./models.js");
@@ -28,8 +29,19 @@ app.use(morgan("common"));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Enable CORS for all requests
-app.use(cors());
+// Add your Netlify URL to the allowedOrigins array
+let allowedOrigins = ['http://localhost:1234', 'https://cleyflix.netlify.app'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
+      return callback(new Error(message), false);
+    }
+    return callback(null, true);
+  }
+}));
 
 // Authentication setup
 let auth = require("./auth")(app);
@@ -37,8 +49,6 @@ let auth = require("./auth")(app);
 // Assuming you have a passport.js file for JWT strategy
 const passport = require("passport");
 require("./passport");
-
-
 
 // Routes
 
@@ -63,7 +73,7 @@ app.get(
   }
 );
 
- // Get al movies with JWT authentication
+// Get all movies with JWT authentication
 app.get(
   "/movies",
   passport.authenticate("jwt", { session: false }),
@@ -77,8 +87,7 @@ app.get(
         res.status(500).send("Error: " + error);
       });
   }
-); 
-
+);
 
 // Register a new user with validation
 app.post(
@@ -289,6 +298,30 @@ app.delete(
       res
         .status(500)
         .json({ error: "An error occurred while deleting the user" });
+    }
+  }
+);
+
+// Get similar movies by movie ID with JWT authentication
+app.get(
+  "/movies/:id/similar",
+  passport.authenticate("jwt",{ session: false }),
+  async (req, res) => {
+    try {
+      const movieId = req.params.id;
+
+      // Find the movie and populate the similarMovies field
+      const movie = await Movies.findById(movieId).populate("similarMovies");
+
+      if (!movie) {
+        return res.status(404).send("Movie not found");
+      }
+
+      // Return similar movies
+      res.json(movie.similarMovies);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error: " + error);
     }
   }
 );
