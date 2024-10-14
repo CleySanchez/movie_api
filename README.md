@@ -140,4 +140,3 @@ This project is licensed under the MIT License.
 📬 Contact
 
 If you have any questions or issues, please contact clement.sanchez.31@gmail.com.
-
